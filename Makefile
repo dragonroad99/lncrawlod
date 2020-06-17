@@ -1,21 +1,18 @@
 # Default task: init
+
 ifeq ($(OS),Windows_NT)
-    COPY := copy
-    DEL := del
-	RMDIR := rd /S /Q
-	PYTHON := python
-	PIP := $(PYTHON) -m pip
+	PIP := python -m pip
 else
-    COPY := cp
-    DEL := rm -fv
-	RMDIR := rm -rfv
-	PYTHON := python3
-	PIP := $(PYTHON) -m pip
+	PIP := python3 -m pip
 endif
 
+SOURCES := $(SOURCES) __main__.py
 
 init ::
 	poetry shell -n
+
+run ::
+	@poetry run python .
 
 setup ::
 	$(PIP) install --user -U poetry
@@ -23,33 +20,17 @@ setup ::
 
 requirements ::
 	poetry lock
-	@poetry export -f requirements.txt -o requirements.txt
-	@poetry export --dev -f requirements.txt -o requirements-dev.txt
+	poetry export -f requirements.txt -o requirements.txt --without-hashes
+	poetry export --dev -f requirements.txt -o dev-requirements.txt --without-hashes
 
 lint ::
-	@echo "Stop the build if there are Python syntax errors or undefined names"
-	poetry run flake8 --count --ignore="E501" --statistics lncrawl tests 
-	@echo "exit-zero treats all errors as warnings."
-	poetry run flake8 --count  --exit-zero --max-complexity=10 --max-line-length=120 --statistics lncrawl tests 
+	poetry run mypy $(SOURCES)
+	poetry run flake8 --count --ignore="E501 F401" --statistics $(SOURCES)
+	poetry run flake8 --count --ignore="E501 F401" --exit-zero \
+		--max-complexity=10 --max-line-length=120 --statistics $(SOURCES)
 
 format ::
-	@echo "Automatic reformatting"
-	poetry run autopep8 -aaa --in-place --max-line-length=80 --recursive lncrawl tests
-
-clean ::
-	@echo "--- Cleaning auto-generated files ---"
-	@make clean_pycache
-	@$(DEL) report.xml coverage.xml
-	@$(RMDIR) build dist .tox .egg lightnovel_crawler.egg-info
-
-
-ifeq ($(OS),Windows_NT)
-clean_pycache ::
-	@$(RMDIR) $(shell dir "." /AD /B /S | findstr /E /I /R "__pycache__")
-else
-clean_pycache ::
-	@$(RMDIR) $(shell find "." -type d -name "__pycache__")
-endif
+	poetry run autopep8 -aaa --in-place --max-line-length=80 --recursive $(SOURCES)
 
 test ::
 	@echo "--- Running all tests ---"
@@ -69,24 +50,32 @@ ci ::
 
 coverage ::
 	@echo "--- Generate a test coverage ---"
-	poetry run py.test --cov-config=.coveragerc --verbose --cov-report=term --cov-report=xml --cov=lncrawl tests
+	poetry run py.test --cov-config=.coveragerc --verbose --cov-report=term --cov-report=xml --cov=$(SOURCES)
 	poetry run coveralls
 
 build ::
-	@make clean lint
-	$(PYTHON) setup.py sdist bdist_wheel --universal
+	make lint
+	poetry run python setup.py sdist bdist_wheel --universal
 
 publish ::
-	@make build
+	make build
 	$(PIP) install 'twine>=1.5.0'
 	twine upload dist/*
-	@make clean
 
 publish_test ::
-	@make build
+	make build
 	$(PIP) install 'twine>=1.5.0'
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-	@make clean
 
-run ::
-	@poetry run mypy .
+ifeq ($(OS),Windows_NT)
+clean ::
+	@echo --- Cleaning auto-generated files ---
+	DEL report.xml coverage.xml 2> nul
+	RD /S /Q build dist .tox .egg lncrawl.egg-info .mypy_cache 2> nul
+	RD /S /Q $(shell dir "." /AD /B /S | findstr /E /I /R "__pycache__") 2> nul
+else
+	@echo "--- Cleaning auto-generated files ---"
+	rm -fv report.xml coverage.xml
+	rm -rfv build dist .tox .egg lncrawl.egg-info .mypy_cache
+	rm -rfv $(shell find "." -type d -name "__pycache__")
+endif

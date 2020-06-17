@@ -9,6 +9,8 @@ class DictUtils:
 
     @staticmethod
     def merge(target: dict, *sources: dict) -> dict:
+        if not (isinstance(target, dict) or sources):
+            return target
         for source in sources:
             if isinstance(source, dict):
                 for key, val in source.items():
@@ -23,6 +25,8 @@ class DictUtils:
     @staticmethod
     def get_keys(path: PathType) -> List[str]:
         keys = []
+        if not path:
+            return keys
         if isinstance(path, str):
             keys += path.split(DictUtils.sep)
         else:
@@ -33,6 +37,8 @@ class DictUtils:
 
     @staticmethod
     def has_path(target: dict, path: PathType) -> bool:
+        if not isinstance(target, dict):
+            return False
         keys = DictUtils.get_keys(path)
         if len(keys) > 0:
             for key in keys:
@@ -44,6 +50,8 @@ class DictUtils:
 
     @staticmethod
     def get_value(target: dict, path: PathType, default: dict = None) -> Union[dict, None]:
+        if not isinstance(target, dict):
+            return default
         keys = DictUtils.get_keys(path)
         if len(keys) > 0:
             for key in keys:
@@ -55,6 +63,8 @@ class DictUtils:
 
     @staticmethod
     def put_value(target: dict, path: PathType, value: Any) -> None:
+        if not isinstance(target, dict):
+            return
         keys = DictUtils.get_keys(path)
         if not keys:
             return

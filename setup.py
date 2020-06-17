@@ -3,6 +3,8 @@ import os
 import re
 import sys
 
+from setuptools import find_packages, setup  # type: ignore
+
 from lncrawl import VERSION
 
 cur_dir = os.path.dirname(__file__)
@@ -25,8 +27,6 @@ def read_requirements(filename):
 
 
 def run_setup():
-    # import required packages
-    from setuptools import setup, find_packages
 
     # configure setup
     setup(

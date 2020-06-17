@@ -7,6 +7,7 @@ import importlib
 import os
 import re
 from glob import glob
+from types import ModuleType
 from typing import List, Union
 from urllib.parse import urlparse
 
@@ -47,27 +48,11 @@ def get_scraper_by_name(name: str) -> Union[Scraper, None]:
     return None
 
 
-# Auto-import all submodules
-re_module = re.compile(r'^([^_.][^.]+).py[c]?$', re.IGNORECASE)
-re_url = re.compile(r'^^(https?|ftp)://[^\s/$.?#].[^\s]*$', re.I)
-
-sources_folder = os.path.abspath(sources.__path__[0])
-for file_path in glob(sources_folder + '/**/*.py', recursive=True):
-    if not os.path.isfile(file_path):
-        continue
-
-    file_name = os.path.basename(file_path)
-    regex_result = re_module.match(file_name)
-    if not regex_result:  # does not contains a module
-        continue
-
-    rel_path = file_path[len(sources_folder) + 1:-3]
-    scraper_name = rel_path.replace(os.sep, '.')
-    module_name = sources.__package__ + '.' + scraper_name
-    module = importlib.import_module(module_name, package=__package__)
-
-    for key in dir(module):
-        scraper = getattr(module, key)
+# To auto-import all submodules
+def import_scraper(scraper_name: str, scraper_module: ModuleType):
+    re_url = re.compile(r'^^(https?|ftp)://[^\s/$.?#].[^\s]*$', re.I)
+    for key in dir(scraper_module):
+        scraper = getattr(scraper_module, key)
         if type(scraper) != type(Scraper) or scraper.__base__ != Scraper:
             continue
 
@@ -90,3 +75,26 @@ for file_path in glob(sources_folder + '/**/*.py', recursive=True):
         instance: Scraper = scraper(scraper_name)
         instance.base_urls = new_base_urls
         scraper_list.append(instance)
+
+
+def find_scrapers(path: str):
+    re_module = re.compile(r'^([^_.][^.]+).py[c]?$', re.IGNORECASE)
+    for file_path in glob(sources_folder + '/**/*.py', recursive=True):
+        if not os.path.isfile(file_path):
+            continue
+
+        file_name = os.path.basename(file_path)
+        regex_result = re_module.match(file_name)
+        if not regex_result:  # does not contains a module
+            continue
+
+        rel_path = file_path[len(sources_folder) + 1:-3]
+        scraper_name = rel_path.replace(os.sep, '.')
+        module_name = sources.__package__ + '.' + scraper_name
+        module = importlib.import_module(module_name, package=__package__)
+
+        import_scraper(scraper_name, module)
+
+
+sources_folder = os.path.abspath(getattr(sources, '__path__')[0])
+find_scrapers(sources_folder)

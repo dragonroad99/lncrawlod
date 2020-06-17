@@ -2,7 +2,7 @@
 
 import logging
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Tag  # type: ignore
 
 logger = logging.getLogger(__name__)
 

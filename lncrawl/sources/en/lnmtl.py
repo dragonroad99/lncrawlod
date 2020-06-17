@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import js2py
+import js2py  # type: ignore
 
 from lncrawl.app.models import Author, AuthorType, Chapter, Language, Volume
 from lncrawl.app.scraper import Context, Scraper
@@ -68,7 +68,7 @@ class LNMTLScraper(Scraper):
         # Wait for all chapters
         while ctx.extra['futures']:
             ctx.extra['futures'].pop(0).result()
-        delattr(ctx, '_futures')
+        del ctx.extra['futures']
 
     def fetch_chapter_list(self, ctx: Context, url: str, volume: Volume, page=1):
         url = UrlUtils.format(url, query={

@@ -5,7 +5,7 @@ import logging
 import tempfile
 from typing import Any, MutableMapping
 
-from cloudscraper import CloudScraper, create_scraper
+from cloudscraper import CloudScraper, create_scraper  # type: ignore
 
 from ..config import CONFIG
 from .response import BrowserResponse

@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
-import platform
 import re
 import shlex
 import shutil
 import sys
 from pathlib import Path
 
-from PyInstaller import __main__ as pyi
-from setuptools.config import read_configuration
+from PyInstaller import __main__ as pyi  # type: ignore
 
 ROOT = Path(__file__).parent
 pyi_root = ROOT / '.pyi'
