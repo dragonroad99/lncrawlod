@@ -24,7 +24,7 @@ class DictUtils:
 
     @staticmethod
     def get_keys(path: PathType) -> List[str]:
-        keys = []
+        keys: List[str] = []
         if not path:
             return keys
         if isinstance(path, str):

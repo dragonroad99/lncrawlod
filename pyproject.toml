@@ -36,6 +36,7 @@ coveralls = "^2.0.0"
 responses = "^0.10.15"
 pyinstaller = "^3.6"
 autopep8 = "^1.5.3"
+wheel = "^0.34.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0a5"]

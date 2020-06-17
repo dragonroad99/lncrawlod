@@ -1,2 +1,2 @@
-include LICENSE README.md lncrawl/VERSION requirements.txt dev-requirements.txt
+include LICENSE README.md requirements.txt dev-requirements.txt
 recursive-include lncrawl *.*

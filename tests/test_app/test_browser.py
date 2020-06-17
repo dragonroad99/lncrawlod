@@ -51,8 +51,6 @@ class TestBrowser:
         assert res.json == {}
         assert res.soup is not None
         assert res.soup.find('p').text == 'secret text'
-        assert res.soup.find_value('p') == 'secret text'
-        assert res.soup.select_value('p') == 'secret text'
 
     @responses.activate
     def test_get_empty_content(self):

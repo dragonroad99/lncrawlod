@@ -33,19 +33,17 @@ def run_setup():
         name='lightnovel-crawler',
         author='Sudipto Chandra',
         author_email='dipu.sudipta@gmail.com',
-        description='Crawls light novels and make html, text, epub, mobi, pdf and docx',
+        description='Downloads lightnovels from various online sources and generates ebooks',
         long_description=long_description(),
         long_description_content_type='text/markdown',
         license='Apache 2.0',
         license_file='LICENSE',
 
         version=VERSION,
-        install_requires=read_requirements(
-            os.path.join(cur_dir, 'requirements.txt')),
-        tests_require=read_requirements(
-            os.path.join(cur_dir, 'dev-requirements.txt')),
+        install_requires=read_requirements(os.path.join(cur_dir, 'requirements.txt')),
+        tests_require=read_requirements(os.path.join(cur_dir, 'dev-requirements.txt')),
         packages=find_packages(),
-        package_dir={'lnc': 'lncrawl'},
+        package_dir={'lncrawl': 'lncrawl'},
         include_package_data=True,
 
         entry_points={

@@ -4,13 +4,14 @@ import js2py  # type: ignore
 
 from lncrawl.app.models import Author, AuthorType, Chapter, Language, Volume
 from lncrawl.app.scraper import Context, Scraper
-from lncrawl.app.utility import TextUtils, UrlUtils
+from lncrawl.app.utility import TextUtils, UrlUtils, SoupUtils
 
 LOGIN_URL = 'https://lnmtl.com/auth/login'
 LOGOUT_URL = 'https://lnmtl.com/auth/logout'
 
 
 class LNMTLScraper(Scraper):
+    version: int = 1
     base_urls = ['https://lnmtl.com/']
 
     def login(self, ctx: Context) -> bool:
@@ -18,7 +19,7 @@ class LNMTLScraper(Scraper):
         if soup.find('a', {'href': LOGOUT_URL}):
             return True
 
-        token = soup.select_value('form input[name="_token"]', value_of='value')
+        token = SoupUtils.select_value(soup, 'form input[name="_token"]', 'value')
         self.log.debug('Login token: %s', token)
         response = self.post_sync(LOGIN_URL, body={
             '_token': token,
@@ -28,7 +29,7 @@ class LNMTLScraper(Scraper):
 
         soup = response.soup
         if not soup.find('a', {'href': LOGOUT_URL}):
-            error = soup.select_value('.has-error .help-block', value_of='text')
+            error = SoupUtils.select_value(soup, '.has-error .help-block')
             raise Exception(error or 'Failed to login')
         return True
 
@@ -38,16 +39,17 @@ class LNMTLScraper(Scraper):
         ctx.language = Language.ENGLISH
 
         # Parse novel
-        ctx.novel.name = soup.select_value('.novel .media .novel-name', value_of='text')
-        ctx.novel.cover_url = soup.select_value('.novel .media img', value_of='src')
+        ctx.novel.name = SoupUtils.select_value(soup, '.novel .media .novel-name')
+        ctx.novel.name = TextUtils.ascii_only(ctx.novel.name)
+
+        ctx.novel.cover_url = SoupUtils.select_value(soup, '.novel .media img', 'src')
         ctx.novel.details = str(soup.select_one('.novel .media .description')).strip()
-        ctx.novel.name = TextUtils.latin_only(ctx.novel.name)
 
         # Find authors
         for dl in soup.select('.panel-default .panel-body dl'):
             key = dl.find('dt').text
             if key == 'Authors':
-                value = dl.find('dd').text
+                value = TextUtils.ascii_only(dl.find('dd').text)
                 author = Author(value, AuthorType.AUTHOR)
                 ctx.authors.add(author)
 
@@ -60,7 +62,7 @@ class LNMTLScraper(Scraper):
             serial = int(item.get('number', i + 1))
             vol = ctx.add_volume(serial)
             vol.extra = item
-            vol.name = TextUtils.latin_only(item.get('title', ''))
+            vol.name = TextUtils.ascii_only(item.get('title', ''))
 
             f = self.submit_task(self.fetch_chapter_list, ctx, data['route'], vol)
             ctx.extra['futures'].append(f)
@@ -83,11 +85,14 @@ class LNMTLScraper(Scraper):
             chap = ctx.add_chapter(serial, volume)
             chap.extra = item
             chap.body_url = item.get('site_url', '')
-            chap.name = TextUtils.latin_only(item.get('title', ''))
+            chap.name = TextUtils.ascii_only(item.get('title', ''))
 
         if page < result.get('last_page', page):
             f = self.submit_task(self.fetch_chapter_list, ctx, url, volume, page + 1)
             ctx.extra['futures'].append(f)
 
     def fetch_chapter(self, ctx: Context, chapter: Chapter) -> None:
-        raise NotImplementedError()
+        soup = self.get_sync(chapter.body_url).soup
+        body = soup.select('.chapter-body .translated')
+        body = [TextUtils.sanitize_text(x.text) for x in body if x]
+        chapter.body = '\n'.join(['<p>%s</p>' % (x) for x in body if len(x)])

@@ -11,6 +11,7 @@ from .context import Context
 
 
 class Scraper(AsyncBrowser, ABC):
+    version: int = 1
     base_urls: List[str] = []
 
     def __init__(self, name: str):

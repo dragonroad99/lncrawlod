@@ -6,3 +6,4 @@ from .icons import Icons
 from .str_enum import StrEnum
 from .text_utils import TextUtils
 from .url_utils import UrlUtils
+from .soup_utils import SoupUtils

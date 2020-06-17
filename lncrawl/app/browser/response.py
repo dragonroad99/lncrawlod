@@ -3,10 +3,10 @@
 import json
 import logging
 
+from bs4 import BeautifulSoup  # type:ignore
 from requests import Response
 
 from ..config import CONFIG
-from .soup_ex import ExtendedSoup
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class BrowserResponse:
         return self.__json
 
     @property
-    def soup(self) -> ExtendedSoup:
+    def soup(self) -> BeautifulSoup:
         if not hasattr(self, '__soup'):
-            self.__soup = ExtendedSoup(markup=self.text, features=self.parser)
+            self.__soup = BeautifulSoup(markup=self.text, features=self.parser)
         return self.__soup

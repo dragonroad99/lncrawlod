@@ -33,14 +33,14 @@ format ::
 	poetry run autopep8 -aaa --in-place --max-line-length=80 --recursive $(SOURCES)
 
 test ::
-	@echo "--- Running all tests ---"
+	make requirements
 	poetry run tox --parallel auto
 
 watch ::
 	@echo "--- Select recent changes and re-run tests ---"
 	poetry run ptw -- --testmon
 
-retry ::
+watch_retry ::
 	@echo "--- Retry failed tests on every file change ---"
 	poetry run py.test -n auto --forked --looponfail
 
@@ -50,7 +50,8 @@ ci ::
 
 coverage ::
 	@echo "--- Generate a test coverage ---"
-	poetry run py.test --cov-config=.coveragerc --verbose --cov-report=term --cov-report=xml --cov=$(SOURCES)
+	poetry run py.test --cov-config=.coveragerc --verbose \
+		--cov-report=term --cov-report=xml --cov=$(SOURCES)
 	poetry run coveralls
 
 build ::
@@ -69,13 +70,13 @@ publish_test ::
 
 ifeq ($(OS),Windows_NT)
 clean ::
-	@echo --- Cleaning auto-generated files ---
 	DEL report.xml coverage.xml 2> nul
-	RD /S /Q build dist .tox .egg lncrawl.egg-info .mypy_cache 2> nul
+	RD /S /Q build dist .tox .egg .mypy_cache 2> nul
+	RD /S /Q lightnovel_crawler.egg-info 2> nul
 	RD /S /Q $(shell dir "." /AD /B /S | findstr /E /I /R "__pycache__") 2> nul
 else
-	@echo "--- Cleaning auto-generated files ---"
-	rm -fv report.xml coverage.xml
-	rm -rfv build dist .tox .egg lncrawl.egg-info .mypy_cache
-	rm -rfv $(shell find "." -type d -name "__pycache__")
+clean ::
+	rm -f report.xml coverage.xml
+	rm -rf build dist .tox .egg *.egg-info .mypy_cache
+	find "." -type d -name "__pycache__" | xargs rm -rf
 endif

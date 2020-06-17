@@ -58,7 +58,7 @@ python-slugify==4.0.0
 python-telegram-bot==12.7
 pytz==2020.1
 pyyaml==5.3.1
-requests==2.23.0
+requests==2.24.0
 requests-toolbelt==0.9.1
 responses==0.10.15
 six==1.15.0
@@ -76,5 +76,6 @@ watchdog==0.10.2
 wcwidth==0.2.4
 webencodings==0.5.1
 websockets==8.0.2
+wheel==0.34.2
 yarl==1.4.2
 zipp==3.1.0; python_version < "3.8"

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import List, Set, Union, Dict, Any
+from typing import Any, Dict, List, Optional, Set, Union
 
 from ..binders import OutputFormat
 from ..models import Author, Chapter, Language, Novel, TextDirection, Volume
@@ -65,6 +65,9 @@ class Context:
     def fetch_chapter(self, chapter: Chapter):
         self.scraper.fetch_chapter(self, chapter)
 
+    def fetch_chapter_by_serial(self, serial: int):
+        self.scraper.fetch_chapter(self, self.get_chapter(serial))
+
     #######################################################
     #             Methods to manage volume list           #
     #######################################################
@@ -102,7 +105,8 @@ class Context:
     def min_chapter_serial(self) -> int:
         return min(self.chapters, key=lambda x: x.serial).serial
 
-    def get_chapter(self, serial: int, volume: Volume = None) -> Union[Chapter, None]:
+    # TODO: make it more efficient
+    def get_chapter(self, serial: int, volume: Volume = None) -> Optional[Chapter]:
         if volume is not None:
             probe = Chapter(volume, serial)
             temp = self.chapters.intersection(set([probe]))
@@ -124,7 +128,7 @@ class Context:
             self.chapters.add(chapter)
         return chapter
 
-    def get_chapter_by_url(self, url: str) -> Union[Chapter, None]:
+    def get_chapter_by_url(self, url: str) -> Optional[Chapter]:
         '''Find the chapter object given url'''
         url = (url or '').strip().strip('/')
         for chapter in self.chapters:

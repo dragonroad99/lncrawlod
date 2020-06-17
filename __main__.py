@@ -3,6 +3,7 @@
 
 import logging
 
+
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -15,7 +16,8 @@ finally:
     print()
 
 try:
-    from lncrawl.app.models import *
+    from lncrawl.app.models import (Author, AuthorType, Chapter, Language,
+                                    Novel, Volume)
     print(Language.ENGLISH)
     author = Author('Sudipto Chandra', AuthorType.AUTHOR)
     print(author)
@@ -33,8 +35,8 @@ finally:
 #     b = Browser()
 #     duck = b.get('https://duckduckgo.com/')
 #     print(duck)
-#     print(duck.soup.select_value('link[rel="canonical"]', value_of='href'))
-#     print(duck.soup.find_value('meta', {'name': 'viewport'}, value_of='content'))
+#     print(duck.soup.select_one('link[rel="canonical"]')['href'])
+#     print(duck.soup.find('meta', {'name': 'viewport'})['content'])
 # finally:
 #     print()
 
@@ -70,5 +72,11 @@ try:
     print(context.novel)
     print([str(x) for x in context.volumes])
     print([str(x) for x in context.chapters])
+    print()
+
+    chap = context.get_chapter(1)
+    if chap is not None:
+        context.fetch_chapter_by_serial(1)
+        print(chap.body)
 finally:
     print()
