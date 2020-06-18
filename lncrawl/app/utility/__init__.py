@@ -7,3 +7,4 @@ from .str_enum import StrEnum
 from .text_utils import TextUtils
 from .url_utils import UrlUtils
 from .soup_utils import SoupUtils
+from .module_utils import ModuleUtils

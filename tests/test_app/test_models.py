@@ -67,7 +67,7 @@ class TestModels:
         assert volume.novel == novel
         assert volume.novel == Novel('http://any.url')
         assert volume.details == ''
-        assert volume.name == 'Volume 02'
+        assert volume.name == 'Volume 2'
 
     def test_chapter_instance(self):
         novel = Novel('http://any.url/path')
@@ -90,14 +90,14 @@ class TestModels:
     def test_chapter_properties(self):
         novel = Novel('http://any.url/path')
         volume = Volume(novel, serial=2)
-        chapter = Chapter(volume, serial=235, body_url='body/url')
+        chapter = Chapter(volume, serial=5, body_url='body/url')
         chapter.body = '<html>'
         assert volume == chapter.volume
         assert novel == chapter.novel
-        assert chapter.serial == 235
+        assert chapter.serial == 5
         assert chapter.volume.serial == 2
         assert chapter.novel.url == 'http://any.url/path'
-        assert chapter.name == 'Chapter 235'
+        assert chapter.name == 'Chapter 5'
         assert chapter.body_url == 'http://any.url/path/body/url'
         assert chapter.body == '<html>'
 

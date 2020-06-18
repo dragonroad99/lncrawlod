@@ -3,7 +3,7 @@
 Files are auto-imported by the app, if it meets these conditions:
     - file ends with .py extension
     - file does not starts with an underscore
-    - contains a class that extends `lncrawl.app.scraper.scraper`
+    - contains a class that extends `lncrawl.app.scraper.scraper.Scraper`
     - `base_urls` contains a list of urls supported by the scraper
 
 For example, see any of the files inside this directory.

@@ -47,7 +47,7 @@ class Chapter:
         if value:
             self._name = value.strip()
         else:
-            self._name = "Chapter %03d" % self.serial
+            self._name = "Chapter " + str(self.serial)
 
     @property
     def body_url(self):
@@ -62,3 +62,14 @@ class Chapter:
 
     def put_extra(self, key: str, val: Any):
         self.extra[key] = val
+
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            'novel': self.novel.name,
+            'volume': self.volume.serial,
+            'serial': self.serial,
+            'name': self.name,
+            'body_url': self.body_url,
+            'body': self.body,
+            'extra': self.extra,
+        }

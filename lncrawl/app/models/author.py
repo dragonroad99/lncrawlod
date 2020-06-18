@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from typing import Dict, Any
 from enum import IntEnum, auto
 
 
@@ -37,3 +38,9 @@ class Author:
     @name.setter
     def name(self, value):
         self._name = value.strip() if value else 'N/A'
+
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            'name': self.name,
+            'type': self.type,
+        }

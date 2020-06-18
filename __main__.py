@@ -50,18 +50,26 @@ finally:
 # finally:
 #     print()
 
+try:
+    from lncrawl.app import binder
+    print(binder.binder_list())
+    print(binder.binder_list()[0])
+    print(binder.get_binder('json'))
+finally:
+    print()
+
 
 try:
-    from lncrawl.app.scraper import sources
-    print(sources.scraper_list)
-    print(sources.scraper_list[0].base_urls)
-    print(sources.get_scraper_by_url('https://lnmtl.com/novel/dragon-of-the-root'))
-    print(sources.get_scraper_by_name('lnmtl'))
+    from lncrawl.app import scraper
+    print(scraper.scraper_list())
+    print(scraper.scraper_list()[0].base_urls)
+    print(scraper.get_scraper_by_url('https://lnmtl.com/novel/dragon-of-the-root'))
+    print(scraper.get_scraper_by_name('lnmtl'))
 finally:
     print()
 
 try:
-    from lncrawl.app.scraper import Context
+    from lncrawl.app.context import Context
     context = Context('https://lnmtl.com/novel/dragon-of-the-root')
     context.login_id = 'dipu@gmail.com'
     context.login_password = 'password'
@@ -78,5 +86,7 @@ try:
     if chap is not None:
         context.fetch_chapter_by_serial(1)
         print(chap.body)
+
+    context.bind_books()
 finally:
     print()

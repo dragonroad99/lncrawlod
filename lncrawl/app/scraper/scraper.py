@@ -6,8 +6,8 @@ from typing import List
 
 from ..browser import AsyncBrowser
 from ..config import CONFIG
+from ..context import Context
 from ..models import Chapter
-from .context import Context
 
 
 class Scraper(AsyncBrowser, ABC):

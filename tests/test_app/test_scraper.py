@@ -3,9 +3,9 @@
 import pytest
 
 from lncrawl.app.config import CONFIG
+from lncrawl.app.context import Context
 from lncrawl.app.models import Novel
-from lncrawl.app.scraper.context import Context
-from lncrawl.app.scraper.scraper import Scraper
+from lncrawl.app.scraper import Scraper
 
 
 class TestScraper:

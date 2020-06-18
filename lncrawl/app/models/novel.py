@@ -48,3 +48,12 @@ class Novel:
 
     def put_extra(self, key: str, val: Any):
         self.extra[key] = val
+
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            'toc_url': self.url,
+            'name': self.name,
+            'cover_url': self.cover_url,
+            'details': self.details,
+            'extra': self.extra,
+        }

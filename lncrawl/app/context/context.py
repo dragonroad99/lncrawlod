@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
-from ..binders import OutputFormat
 from ..models import Author, Chapter, Language, Novel, TextDirection, Volume
 
 
@@ -27,14 +27,15 @@ class Context:
         self.volumes: Set[Volume] = set()
         self.chapters: Set[Chapter] = set()
 
-        self.output_path: Path = Path('')  # TODO: replace with default
         self.keep_old_path: bool = True
         self.split_book_by_volumes: bool = True
-        self.output_formats: Set[OutputFormat] = set([OutputFormat.EPUB])
         self.filename_format: str = '%{title} c%{fchap}-%{lchap}.%{ext}'
         # TODO specs: title, fchap, lchap, fvol, lvol, ext, time, url
 
-        self.extra: Dict[Any, Any] = dict()
+        self.binders: List[str] = ['json']  # TODO: get from config
+        self.output_files: Dict[str, List[str]] = dict()
+
+        self.extra: Dict[str, Any] = dict()
 
     #######################################################
     #                Methods for Scrapping                #
@@ -43,8 +44,8 @@ class Context:
     @property
     def scraper(self):
         if not hasattr(self, '_scraper'):
-            from .sources import get_scraper_by_url
-            self._scraper = get_scraper_by_url(self.toc_url)
+            from .. import scraper
+            self._scraper = scraper.get_scraper_by_url(self.toc_url)
         return self._scraper
 
     def call(self, method: str, *args, **kwargs):
@@ -97,6 +98,7 @@ class Context:
     #######################################################
     #            Methods to manage chapter list           #
     #######################################################
+
     @property
     def max_chapter_serial(self) -> int:
         return max(self.chapters, key=lambda x: x.serial).serial
@@ -135,3 +137,19 @@ class Context:
             if chapter.body_url == url:
                 return chapter
         return None
+
+    #######################################################
+    #              Methods to manage binders              #
+    #######################################################
+
+    def get_output_path(self, binder_name: str) -> str:
+        output_dir = Path('Lightnovels')  # TODO: get from config
+        output_dir = output_dir / self.novel.name / binder_name
+        return os.path.abspath(str(output_dir))
+
+    def bind_books(self):
+        from .. import binder
+        # TODO: resolve binder dependencies
+        # TODO: can we run it in parallel?
+        for binder_name in self.binders:
+            binder.get_binder(binder_name).process(self)

@@ -36,10 +36,19 @@ class Volume:
         if value:
             self._name = value.strip()
         else:
-            self._name = "Volume %02d" % self.serial
+            self._name = "Volume " + str(self.serial)
 
     def get_extra(self, key: str):
         return self.extra.get(key, '')
 
     def put_extra(self, key: str, val: Any):
         self.extra[key] = val
+
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            'novel': self.novel.name,
+            'serial': self.serial,
+            'name': self.name,
+            'details': self.details,
+            'extra': self.extra,
+        }
