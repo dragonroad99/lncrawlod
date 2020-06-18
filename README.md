@@ -1,4 +1,4 @@
-<a href="https://github.com/dipu-bd/lightnovel-crawler"><img src="res/lncrawl-icon.png" width="128px" align="left"/></a>
+<a href="https://github.com/dipu-bd/lightnovel-crawler"><img src="assets/lncrawl-icon.png" width="128px" align="right"/></a>
 
 # Lightnovel Crawler
 
@@ -15,7 +15,7 @@
 <!-- [![Heroku](https://heroku-badge.herokuapp.com/?app=lncrawl)] -->
 <!-- [![Snap Status](https://build.snapcraft.io/badge/dipu-bd/lightnovel-crawler.svg)](https://build.snapcraft.io/user/dipu-bd/lightnovel-crawler) -->
 
-Downloads lightnovels from various online sources and generates ebooks in many formats.
+An app that downloads novels and generate e-books from online sources.
 
 > **Discord: [https://discord.gg/7A5Hktx](https://discord.gg/7A5Hktx)**
 
@@ -50,8 +50,6 @@ Downloads lightnovels from various online sources and generates ebooks in many f
 **Install it from https://calibre-ebook.com/download** <br>
 Without it, you will only get output in epub, text, and web formats.
 
-Also, you have to install **node.js** to access cloudflare enabled sites (e.g. https://novelplanet.com/). Download and install node.js from here: https://nodejs.org/en/download/
-
 ### A1. Standalone Bundle (Windows, Linux)
 
 ⏬ **Windows**: [lightnovel-crawler v2.19.1 ~ 21.5MB](https://rebrand.ly/lncrawl)
@@ -74,17 +72,23 @@ To install this app or to update installed one via `pip`, just run:
 
 ```bash
 $ pip install --user -U lightnovel-crawler
+# Wait for all dependencies to finish installing
+# Use python -m pip if `pip` is not recognized
 ```
 
 Remember, in some cases you have to use `python3 -m pip` or `pip3` or `python -m pip`. And you do not need `--user` option, if you are running from root.
 
-Next, open your terminal and enter:
+Next,
 
 ```bash
+# Open console and enter:
 $ lightnovel-crawler
 
-# Or, a shortcut:
+# Or, in short:
 $ lncrawl
+
+# Or, even shorter:
+$ lnc
 ```
 
 > To view extra logs, use: `lncrawl -lll`

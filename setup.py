@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import os
 import re
 import sys
@@ -17,7 +18,6 @@ def long_description():
 
 
 def read_requirements(filename):
-    # Ref: https://stackoverflow.com/a/42033122/
     with open(filename, 'r', encoding='utf8') as f:
         requirements = [
             r.strip() for r in f.readlines()
@@ -27,13 +27,11 @@ def read_requirements(filename):
 
 
 def run_setup():
-
-    # configure setup
     setup(
         name='lightnovel-crawler',
         author='Sudipto Chandra',
         author_email='dipu.sudipta@gmail.com',
-        description='Downloads lightnovels from various online sources and generates ebooks',
+        description='An app that downloads novels and generate e-books from online sources.',
         long_description=long_description(),
         long_description_content_type='text/markdown',
         license='Apache 2.0',

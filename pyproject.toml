@@ -1,7 +1,7 @@
 [tool.poetry]
 name = 'lightnovel-crawler'
 version = "3.0.0-alpha"
-description = "Downloads lightnovels from various online sources and generates ebooks"
+description = "An app that downloads novels and generate e-books from online sources."
 authors = ["Sudipto Chandra <dipu.sudipta@gmail.com>"]
 license = "Apache-2.0"
 
