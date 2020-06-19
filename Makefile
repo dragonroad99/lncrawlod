@@ -59,21 +59,21 @@ build ::
 	poetry run python setup.py sdist bdist_wheel --universal
 
 publish ::
-	make build
+	make clean build
 	$(PIP) install 'twine>=1.5.0'
 	twine upload dist/*
 
 publish_test ::
-	make build
+	make clean build
 	$(PIP) install 'twine>=1.5.0'
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 ifeq ($(OS),Windows_NT)
 clean ::
 	DEL report.xml coverage.xml 2> nul
-	RD /S /Q build dist .tox .egg .mypy_cache 2> nul
-	RD /S /Q lightnovel_crawler.egg-info 2> nul
-	RD /S /Q $(shell dir "." /AD /B /S | findstr /E /I /R "__pycache__") 2> nul
+	RD /S /Q build dist .tox .egg .mypy_cache 2> nul | @REM
+	IF EXIST lightnovel_crawler.egg-info ( RD /S /Q lightnovel_crawler.egg-info ) 2> nul
+	RD /S /Q $(shell dir "." /AD /B /S | findstr /E /I /R "__pycache__") 2> nul | @REM
 else
 clean ::
 	rm -f report.xml coverage.xml

@@ -2,7 +2,7 @@
 
 import re
 
-from slugify import slugify
+from slugify import slugify  # type: ignore
 
 re_ascii_only = re.compile('[^\u0000-\u00FF]', re.UNICODE)
 
