@@ -11,6 +11,12 @@ re_active_module_file = re.compile(r'^([^_.][^.]+).py[c]?$', re.IGNORECASE)
 
 
 class ModuleUtils:
+
+    @staticmethod
+    def get_version() -> str:
+        from lncrawl import __version__
+        return __version__
+
     @staticmethod
     def find_modules(src: ModuleType, base: Any) -> Dict[str, Any]:
         src_dir = os.path.abspath(getattr(src, '__path__')[0])

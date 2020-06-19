@@ -6,7 +6,7 @@ import sys
 
 from setuptools import find_packages, setup  # type: ignore
 
-from lncrawl import VERSION
+from lncrawl import __version__
 
 cur_dir = os.path.dirname(__file__)
 
@@ -37,7 +37,7 @@ def run_setup():
         license='Apache 2.0',
         license_file='LICENSE',
 
-        version=VERSION,
+        version=__version__,
         install_requires=read_requirements(os.path.join(cur_dir, 'requirements.txt')),
         tests_require=read_requirements(os.path.join(cur_dir, 'dev-requirements.txt')),
         packages=find_packages(),

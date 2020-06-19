@@ -12,7 +12,7 @@ init ::
 	poetry shell -n
 
 run ::
-	@poetry run python .
+	poetry run python . $(args)
 
 setup ::
 	$(PIP) install --user -U poetry
