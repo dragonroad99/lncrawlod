@@ -8,17 +8,14 @@ from typing import Any, Dict
 import yaml
 from atomicwrites import atomic_write
 
-from .utility import Color, DictUtils, PathType
+from .utility import DictUtils, PathType
+
+_USER_HOME = os.path.expanduser('~')
+_USER_DOCUMENTS = os.path.join(_USER_HOME, 'Documents')
+_CURRENT_FOLDER = os.path.abspath(os.curdir)
 
 
 class _Config:
-    __opened_file__ = None
-
-    __config_files__ = [
-        os.path.abspath('config.yaml'),
-        os.path.join(os.path.expanduser('~'), 'dwse', 'config.yaml'),
-    ]
-
     # Define configurations here
     __dict__: Dict[str, Any] = {
         'browser': {
@@ -62,7 +59,7 @@ class _Config:
             'disable_existing_loggers': True,
             'formatters': {
                 'console': {
-                    'format': f'{Color.CYAN}%(asctime)s{Color.RESET} {Color.BLUE}%(levelname)-8s{Color.RESET} %(message)s',
+                    'format': '%(asctime)s %(levelname)-8s %(message)s',
                     'datefmt': '%H:%M:%S',
                 },
                 'file': {
@@ -93,34 +90,62 @@ class _Config:
         },
     }
 
+    #######################################################
+    #                      INTERNALS                      #
+    #######################################################
+
+    _opened_file = None
+
+    _config_files = [
+        os.path.join(_CURRENT_FOLDER, 'Lightnovels', 'config.yaml'),
+        os.path.join(_USER_DOCUMENTS, 'Lightnovels', 'config.yaml'),
+    ]
+
     def __init__(self):
         self._load()
 
     def _load(self) -> None:
         try:
-            for filepath in self.__config_files__:
+            for filepath in self._config_files:
                 if os.path.exists(filepath) and os.path.isfile(filepath):
-                    self.__opened_file__ = filepath
-                    with open(self.__opened_file__, 'r', encoding='utf-8') as fp:
+                    self._opened_file = filepath
+                    with open(self._opened_file, encoding='utf-8') as fp:
                         data = yaml.safe_load(fp)
                         DictUtils.merge(self.__dict__, data)
-                        logging.info(f'Load config from {self.__opened_file__}')
-                        return  # exit after first load
+                        logging.info(f'Load config from {self._opened_file}')
+                        break  # exit after first success
         except Exception:
             logging.exception('Failed to load config')
         finally:
             atexit.register(self._save)  # save at exit
 
     def _save(self) -> None:
-        if not self.__opened_file__:
-            self.__opened_file__ = self.__config_files__[1]
+        if not self._opened_file:
+            for filepath in self._config_files:
+                try:
+                    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                    self._opened_file = filepath
+                    break  # exit after first success
+                except (OSError, IOError):
+                    pass
         try:
-            os.makedirs(os.path.dirname(self.__opened_file__), exist_ok=True)
-            with atomic_write(self.__opened_file__, overwrite=True) as fp:
-                yaml.safe_dump(self.__dict__, fp)
-                logging.info(f'Saved config to {self.__opened_file__}')
+            if not self._opened_file:
+                raise FileNotFoundError()
+            with atomic_write(self._opened_file, overwrite=True) as fp:
+                yaml.safe_dump(self.__dict__, fp, allow_unicode=True)
+                logging.info(f'Saved config to {self._opened_file}')
         except Exception:
             logging.exception('Failed to save config')
+
+    #######################################################
+    #                   PUBLIC METHODS                    #
+    #######################################################
+
+    @property
+    def workdir(self) -> str:
+        if not self._opened_file:
+            raise FileNotFoundError()
+        return os.path.dirname(self._opened_file)
 
     def get(self, path: PathType, default: Any = None) -> Any:
         return DictUtils.get_value(self.__dict__, path, default)
@@ -140,4 +165,5 @@ class _Config:
         return scraper
 
 
+# Create an instance config for quick access
 CONFIG = _Config()

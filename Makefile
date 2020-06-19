@@ -2,17 +2,21 @@
 
 ifeq ($(OS),Windows_NT)
 	PIP := python -m pip
+	VERSION := "Unavailable"
 else
 	PIP := python3 -m pip
+	VERSION := $$(sed -n -E "s/__version__ = '(.+)'/\1/p" lncrawl/__version__.py)
 endif
 
+PYTHON := poetry run python
 SOURCES := $(SOURCES) __main__.py
 
-init ::
+
+shell ::
 	poetry shell -n
 
 run ::
-	poetry run python . $(args)
+	$(PYTHON) __main__.py $(arg)
 
 setup ::
 	$(PIP) install --user -U poetry
@@ -24,59 +28,60 @@ requirements ::
 	poetry export --dev -f requirements.txt -o dev-requirements.txt --without-hashes
 
 format ::
-	poetry run autopep8 -aaa --in-place --max-line-length=80 --recursive $(SOURCES)
+	$(PYTHON) -m autopep8 -aaa --in-place --max-line-length=80 --recursive $(SOURCES)
 
 lint ::
-	poetry run mypy $(SOURCES)
-	poetry run flake8 --count --ignore="E501 F401" --statistics $(SOURCES)
-	poetry run flake8 --count --ignore="E501 F401" --exit-zero \
+	$(PYTHON) -m mypy $(SOURCES)
+	$(PYTHON) -m flake8 --count --ignore="E501 F401" --statistics $(SOURCES)
+	$(PYTHON) -m flake8 --count --ignore="E501 F401" --exit-zero \
 		--max-complexity=10 --max-line-length=120 --statistics $(SOURCES)
 
-test ::
-	make requirements lint
-	poetry run tox --parallel auto
+test :: requirements lint
+	$(PYTHON) -m tox --parallel auto
 
 watch ::
 	@echo "--- Select recent changes and re-run tests ---"
-	poetry run ptw -- --testmon
+	$(PYTHON) -m ptw -- --testmon
 
 watch_retry ::
 	@echo "--- Retry failed tests on every file change ---"
-	poetry run py.test -n auto --forked --looponfail
+	$(PYTHON) -m py.test -n auto --forked --looponfail
 
 ci ::
 	@echo "--- Generate a test report ---"
-	poetry run py.test -n 8 --forked --junitxml=report.xml
+	$(PYTHON) -m py.test -n 8 --forked --junitxml=report.xml
 
 coverage ::
 	@echo "--- Generate a test coverage ---"
-	poetry run py.test --cov-config=.coveragerc --verbose \
+	$(PYTHON) -m py.test --cov-config=.coveragerc --verbose \
 		--cov-report=term --cov-report=xml --cov=$(SOURCES)
-	poetry run coveralls
+	$(PYTHON) -m coveralls
 
-build ::
-	make lint
-	poetry run python setup.py sdist bdist_wheel --universal
+build :: lint
+	@poetry build
 
-publish ::
-	make clean build
+publish :: clean build
 	$(PIP) install 'twine>=1.5.0'
 	twine upload dist/*
 
-publish_test ::
-	make clean build
+publish_test :: clean build
 	$(PIP) install 'twine>=1.5.0'
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 ifeq ($(OS),Windows_NT)
 clean ::
-	DEL report.xml coverage.xml 2> nul
-	RD /S /Q build dist .tox .egg .mypy_cache 2> nul | @REM
-	IF EXIST lightnovel_crawler.egg-info ( RD /S /Q lightnovel_crawler.egg-info ) 2> nul
-	RD /S /Q $(shell dir "." /AD /B /S | findstr /E /I /R "__pycache__") 2> nul | @REM
+	@DEL report.xml coverage.xml 2> nul | @REM
+	@RD /S /Q build dist .eggs 2> nul | @REM
+	@RD /S /Q .benchmarks .coverage .tox 2> nul | @REM
+	@RD /S /Q lightnovel_crawler.egg-info 2> nul | @REM
+	@FORFILES /S /M "__pycache__" /C "CMD /C RD /S /Q @path" 2> nul | @REM
 else
 clean ::
-	rm -f report.xml coverage.xml
-	rm -rf build dist .tox .egg *.egg-info .mypy_cache
-	find "." -type d -name "__pycache__" | xargs rm -rf
+	@rm -rf coverage.xml report.xml
+	@rm -rf build dist .eggs *.egg-info
+	@rm -rf .benchmarks .coverage .tox
+	@find . -type d -name '.mypy_cache' -exec rm -rf {} +
+	@find . -type d -name '__pycache__' -exec rm -rf {} +
+	@find . -type d -name '*pytest_cache*' -exec rm -rf {} +
+	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 endif

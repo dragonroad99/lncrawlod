@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-__version__ = '3.0.0-alpha'
+import os
 
+from .__version__ import __version__  # noqa
 
-def main():
-    from .app.arguments import get_args
-    print(get_args())
+_ROOT = os.path.dirname(os.path.realpath(__file__))

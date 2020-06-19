@@ -46,9 +46,9 @@ def run_setup():
 
         entry_points={
             'console_scripts': [
-                'lnc = lncrawl:main',
-                'lncrawl = lncrawl:main',
-                'lightnovel-crawler = lncrawl:main',
+                'lnc = lncrawl.console:main',
+                'lncrawl = lncrawl.console:main',
+                'lightnovel-crawler = lncrawl.console:main',
             ],
         },
 
