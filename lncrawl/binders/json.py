@@ -2,20 +2,15 @@
 
 import json
 import os
-import shutil
 
+from lncrawl.app import Context
 from lncrawl.app.binder import Binder
-from lncrawl.app.context import Context
 
 
 class JsonBinder(Binder):
 
     def process(self, ctx: Context):
-        json_dir: str = ctx.get_output_path(self.name)
-        if os.path.exists(json_dir) and not ctx.keep_old_path:
-            shutil.rmtree(json_dir)
-
-        os.makedirs(json_dir, exist_ok=True)
+        json_dir = self.make_output_path(ctx)
 
         novel_file = os.path.join(json_dir, "novel.json")
         with open(novel_file, 'w', encoding='utf-8') as fp:

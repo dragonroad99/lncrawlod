@@ -3,8 +3,7 @@
 import pytest
 
 from lncrawl.app.config import CONFIG
-from lncrawl.app.context import Context
-from lncrawl.app.models import Novel
+from lncrawl.app.context import Context, Novel
 from lncrawl.app.scraper import Scraper
 
 

@@ -2,6 +2,8 @@
 
 import re
 
+from slugify import slugify
+
 re_ascii_only = re.compile('[^\u0000-\u00FF]', re.UNICODE)
 
 
@@ -20,3 +22,13 @@ class TextUtils:
         text = re.sub(r'\u201d[, ]*', '&rdquo;', text)
         text = re.sub(r'[ ]*,[ ]+', ', ', text)
         return text.strip()
+
+    @staticmethod
+    def clean_name(text: str) -> str:
+        return slugify(
+            text,
+            max_length=50,
+            separator=' ',
+            lowercase=False,
+            word_boundary=True,
+        )

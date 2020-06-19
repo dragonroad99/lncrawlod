@@ -4,7 +4,7 @@ Auto imports all crawlers from the lncrawl.sources
 """
 import logging
 import re
-from typing import List, Union, Dict
+from typing import FrozenSet, Union, Dict
 from urllib.parse import urlparse
 
 from ... import sources
@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 _scrapers: Dict[str, Scraper] = dict()
 
 
-def scraper_list() -> List[Scraper]:
-    return list(_scrapers.values())
+def scraper_list() -> FrozenSet[Scraper]:
+    return frozenset(_scrapers.values())
 
 
 def is_rejected_source(url: str) -> bool:

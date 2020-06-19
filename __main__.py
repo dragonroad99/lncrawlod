@@ -3,12 +3,11 @@
 
 import logging
 
-
 logging.basicConfig(level=logging.DEBUG)
 
 
 try:
-    from lncrawl.app.config import CONFIG
+    from lncrawl.app import CONFIG
     print(CONFIG.get('browser/parser/cloudscraper'))
     print(CONFIG.get('logging/version'))
     print(CONFIG.get('logging/loggers/level'))
@@ -16,8 +15,8 @@ finally:
     print()
 
 try:
-    from lncrawl.app.models import (Author, AuthorType, Chapter, Language,
-                                    Novel, Volume)
+    from lncrawl.app import (Author, AuthorType, Chapter, Language,
+                             Novel, Volume)
     print(Language.ENGLISH)
     author = Author('Sudipto Chandra', AuthorType.AUTHOR)
     print(author)
@@ -53,7 +52,7 @@ finally:
 try:
     from lncrawl.app import binder
     print(binder.binder_list())
-    print(binder.binder_list()[0])
+    print(list(binder.binder_list())[0].config.name)
     print(binder.get_binder('json'))
 finally:
     print()
@@ -62,14 +61,14 @@ finally:
 try:
     from lncrawl.app import scraper
     print(scraper.scraper_list())
-    print(scraper.scraper_list()[0].base_urls)
+    print(list(scraper.scraper_list())[0].base_urls)
     print(scraper.get_scraper_by_url('https://lnmtl.com/novel/dragon-of-the-root'))
     print(scraper.get_scraper_by_name('lnmtl'))
 finally:
     print()
 
 try:
-    from lncrawl.app.context import Context
+    from lncrawl.app import Context
     context = Context('https://lnmtl.com/novel/dragon-of-the-root')
     context.login_id = 'dipu@gmail.com'
     context.login_password = 'password'

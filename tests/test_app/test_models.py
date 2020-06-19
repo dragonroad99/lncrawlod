@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from lncrawl.app.models import Author, Chapter, Language, Novel, TextDirection, Volume, AuthorType
+from lncrawl.app.context import (Author, AuthorType, Chapter, Language, Novel,
+                                 TextDirection, Volume)
 
 
 class TestModels:

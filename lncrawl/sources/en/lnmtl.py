@@ -2,10 +2,9 @@
 
 import js2py  # type: ignore
 
-from lncrawl.app.context import Context
-from lncrawl.app.models import Author, AuthorType, Chapter, Language, Volume
+from lncrawl.app import (Author, AuthorType, Chapter, Context, Language,
+                         SoupUtils, TextUtils, UrlUtils, Volume)
 from lncrawl.app.scraper import Scraper
-from lncrawl.app.utility import SoupUtils, TextUtils, UrlUtils
 
 LOGIN_URL = 'https://lnmtl.com/auth/login'
 LOGOUT_URL = 'https://lnmtl.com/auth/logout'

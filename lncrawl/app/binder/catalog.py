@@ -3,7 +3,7 @@
 Auto imports all binder from the lncrawl.binders
 """
 
-from typing import Dict, List
+from typing import Dict, FrozenSet
 
 from ... import binders
 from ..utility import ModuleUtils
@@ -13,12 +13,12 @@ from .binder import Binder
 _binders: Dict[str, Binder] = dict()
 
 
-def binder_names() -> List[str]:
-    return list(_binders.keys())
+def binder_names() -> FrozenSet[str]:
+    return frozenset(_binders.keys())
 
 
-def binder_list() -> List[Binder]:
-    return list(_binders.values())
+def binder_list() -> FrozenSet[Binder]:
+    return frozenset(_binders.values())
 
 
 def get_binder(binder_name: str) -> Binder:

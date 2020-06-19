@@ -23,17 +23,17 @@ requirements ::
 	poetry export -f requirements.txt -o requirements.txt --without-hashes
 	poetry export --dev -f requirements.txt -o dev-requirements.txt --without-hashes
 
+format ::
+	poetry run autopep8 -aaa --in-place --max-line-length=80 --recursive $(SOURCES)
+
 lint ::
 	poetry run mypy $(SOURCES)
 	poetry run flake8 --count --ignore="E501 F401" --statistics $(SOURCES)
 	poetry run flake8 --count --ignore="E501 F401" --exit-zero \
 		--max-complexity=10 --max-line-length=120 --statistics $(SOURCES)
 
-format ::
-	poetry run autopep8 -aaa --in-place --max-line-length=80 --recursive $(SOURCES)
-
 test ::
-	make requirements
+	make requirements lint
 	poetry run tox --parallel auto
 
 watch ::

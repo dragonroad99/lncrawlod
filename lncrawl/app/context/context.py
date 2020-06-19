@@ -3,8 +3,15 @@
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
+from urllib.parse import urlparse
 
-from ..models import Author, Chapter, Language, Novel, TextDirection, Volume
+from ..utility import TextUtils
+from .author import Author
+from .chapter import Chapter
+from .language import Language
+from .novel import Novel
+from .text_direction import TextDirection
+from .volume import Volume
 
 
 class Context:
@@ -142,10 +149,14 @@ class Context:
     #              Methods to manage binders              #
     #######################################################
 
-    def get_output_path(self, binder_name: str) -> str:
-        output_dir = Path('Lightnovels')  # TODO: get from config
-        output_dir = output_dir / self.novel.name / binder_name
-        return os.path.abspath(str(output_dir))
+    @property
+    def output_path(self) -> str:
+        if not hasattr(self, '_output_path'):
+            work_path = Path('Lightnovels')  # TODO: get from config
+            hostname = urlparse(self.toc_url).netloc
+            novel_title = TextUtils.clean_name(self.novel.name)
+            self._output_path = os.path.abspath(work_path / hostname / novel_title)
+        return self._output_path
 
     def bind_books(self):
         from .. import binder
