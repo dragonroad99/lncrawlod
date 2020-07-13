@@ -16,7 +16,7 @@ shell ::
 	poetry shell -n
 
 run ::
-	$(PYTHON) __main__.py $(arg)
+	$(PYTHON) __main__.py $(arg) $(args)
 
 setup ::
 	$(PIP) install --user -U poetry
@@ -60,6 +60,8 @@ coverage ::
 build :: lint
 	@poetry build
 
+install :: build
+
 publish :: clean build
 	$(PIP) install 'twine>=1.5.0'
 	twine upload dist/*
@@ -71,10 +73,10 @@ publish_test :: clean build
 ifeq ($(OS),Windows_NT)
 clean ::
 	@DEL report.xml coverage.xml 2> nul | @REM
-	@RD /S /Q build dist .eggs 2> nul | @REM
+	@RD /S /Q build dist .mypy_cache .eggs 2> nul | @REM
 	@RD /S /Q .benchmarks .coverage .tox 2> nul | @REM
-	@RD /S /Q lightnovel_crawler.egg-info 2> nul | @REM
 	@FORFILES /S /M "__pycache__" /C "CMD /C RD /S /Q @path" 2> nul | @REM
+	@FORFILES /S /M "lightnovel_crawler.egg-info" /C "CMD /C RD /S /Q @path" 2> nul | @REM
 else
 clean ::
 	@rm -rf coverage.xml report.xml
