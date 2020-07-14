@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup, Tag
 from slugify import slugify
 
 from lncrawl import sources
-from lncrawl.app import Language, ModuleUtils
+from lncrawl.app import ModuleUtils
 from lncrawl.app.browser import Browser, BrowserResponse
 
 
@@ -22,6 +22,7 @@ class Selector(IntEnum):
     novel_cover = auto()
     novel_details = auto()
     chapter_content = auto()
+    chapter_list = auto()
 
 
 class AnalyzerContext:
@@ -164,8 +165,12 @@ class AnalyzerContext:
 
     def generate(self):
         '''Genrate source file with current selectors'''
+        if os.path.exists(self.scraper_path):
+            if not click.confirm('Replace existing file?', default=True):
+                return
+
         def get_css(x):
-            return "%s" % json.dumps(self._selectors.get(x.name, ''))
+            return json.dumps(self._selectors.get(x.name, ''))
 
         code = f'''# -*- coding: utf-8 -*-
 
@@ -194,12 +199,16 @@ class {self.scraper_name}(Scraper):
         ctx.novel.details = str(soup.select_one({get_css(Selector.novel_details)})).strip()
 
         # Parse authors
-        author = Author({get_css(Selector.novel_author)}, AuthorType.AUTHOR)
-        ctx.authors.add(author)
+        _author = SoupUtils.select_value(soup, {get_css(Selector.novel_author)})
+        _author = TextUtils.ascii_only(_author)
+        ctx.authors.add(Author(_author, AuthorType.AUTHOR))
 
-        # TODO: Parse volumes and chapters
-        # volume = ctx.add_volume(serial)
-        # chapter = ctx.add_chapter(serial, volume)
+        # Parse volumes and chapters
+        for serial, a in enumerate(soup.select({get_css(Selector.chapter_list)})):
+            volume = ctx.add_volume(1 + serial // 100)
+            chapter = ctx.add_chapter(serial, volume)
+            chapter.body_url = a['href']
+            chapter.name = TextUtils.sanitize_text(a.text)
 
     def fetch_chapter(self, ctx: Context, chapter: Chapter) -> None:
         soup = self.get_sync(chapter.body_url).soup
@@ -208,6 +217,7 @@ class {self.scraper_name}(Scraper):
         chapter.body = '\\n'.join(['<p>%s</p>' % (x) for x in body if len(x)])
 
 '''
+        os.makedirs(os.path.dirname(self.scraper_path), exist_ok=True)
         with open(self.scraper_path, 'w', encoding='utf8') as fp:
             fp.write(code)
         return 'Generated: ' + click.style(self.scraper_path, fg='blue', underline=True)

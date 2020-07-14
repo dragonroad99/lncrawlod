@@ -4,10 +4,9 @@ import click
 
 from .. import __version__
 
-from .test import test
+from .app import app
 from .analyzer import analyze
 
-DEFAULT_COMMAND = test
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -22,9 +21,7 @@ def main(ctx, version):
     if version:
         click.echo('Lightnovel Crawler %s' % __version__)
         ctx.exit()
-    if not ctx.invoked_subcommand:
-        DEFAULT_COMMAND()
 
 
-main.add_command(test)
+main.add_command(app)
 main.add_command(analyze)

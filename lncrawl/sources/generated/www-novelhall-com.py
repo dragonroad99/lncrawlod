@@ -28,16 +28,22 @@ class WwwNovelhallCom(Scraper):
             "#main div.container div.book-main.inner.mt30 div.book-info div.intro span.js-close-wrap")).strip()
 
         # Parse authors
-        author = Author(
-            "#main div.container div.book-main.inner.mt30 div.book-info div.total.booktag span.blue", AuthorType.AUTHOR)
-        ctx.authors.add(author)
+        _author = soup.select_one(
+            "#main div.container div.book-main.inner.mt30 div.book-info div.total.booktag span.blue")
+        _author = str(list(_author.children)[0])
+        _author = _author.replace(r'Author', '').strip()
+        _author = TextUtils.ascii_only(_author)
+        ctx.authors.add(Author(_author, AuthorType.AUTHOR))
 
-        # TODO: Parse volumes and chapters
-        # volume = ctx.add_volume(serial)
-        # chapter = ctx.add_chapter(serial, volume)
+        # Parse volumes and chapters
+        for serial, a in enumerate(soup.select("#morelist li a")):
+            volume = ctx.add_volume(1 + serial // 100)
+            chapter = ctx.add_chapter(serial, volume)
+            chapter.body_url = a['href']
+            chapter.name = TextUtils.sanitize_text(a.text)
 
     def fetch_chapter(self, ctx: Context, chapter: Chapter) -> None:
         soup = self.get_sync(chapter.body_url).soup
-        body = soup.select("")
+        body = soup.select("#htmlContent")
         body = [TextUtils.sanitize_text(x.text) for x in body if x]
         chapter.body = '\n'.join(['<p>%s</p>' % (x) for x in body if len(x)])
