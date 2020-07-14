@@ -33,7 +33,6 @@ class AnalyzerContext:
         self.scraper_url: str = None
         self.scraper_name: str = None
         self.scraper_path: str = None
-        self.novel_language: Language = Language.ENGLISH
         self._selectors = dict()
 
     def _get_globals(self) -> dict:
@@ -86,10 +85,11 @@ class AnalyzerContext:
         ])
         click.echo(f'scraper_name = {self.scraper_name}')
 
-        self.scraper_path = slugify(host, max_length=30) + '.py'
-        if self.novel_language != Language.UNKNOWN:
-            self.scraper_path = os.path.join(
-                self.novel_language, self.scraper_path)
+        self.scraper_path = os.path.join(
+            ModuleUtils.get_path(sources),
+            'generated',
+            slugify(host, max_length=30) + '.py'
+        )
         click.echo(f'scraper_path = {self.scraper_path}')
 
     def locate(self, text: str) -> str:
@@ -208,10 +208,6 @@ class {self.scraper_name}(Scraper):
         chapter.body = '\\n'.join(['<p>%s</p>' % (x) for x in body if len(x)])
 
 '''
-
-        src_folder = ModuleUtils.get_path(sources)
-        src_file = os.path.join(src_folder, self.scraper_path)
-        with open(src_file, 'w', encoding='utf8') as fp:
+        with open(self.scraper_path, 'w', encoding='utf8') as fp:
             fp.write(code)
-
-        return 'Generated: ' + click.style(src_file, fg='blue', underline=True)
+        return 'Generated: ' + click.style(self.scraper_path, fg='blue', underline=True)

@@ -22,7 +22,8 @@ class WwwNovelhallCom(Scraper):
             soup, "#main div.container div.book-main.inner.mt30 div.book-info h1")
         ctx.novel.name = TextUtils.ascii_only(ctx.novel.name)
 
-        ctx.novel.cover_url = SoupUtils.select_value(soup, "", attr="src")
+        ctx.novel.cover_url = SoupUtils.select_value(
+            soup, "#main div.container div.book-main.inner.mt30 div.book-img.hidden-xs img", attr="src")
         ctx.novel.details = str(soup.select_one(
             "#main div.container div.book-main.inner.mt30 div.book-info div.intro span.js-close-wrap")).strip()
 
