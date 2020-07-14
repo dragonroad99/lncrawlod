@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from concurrent.futures import ThreadPoolExecutor
+import time
 
 import click
 import questionary
@@ -21,21 +21,19 @@ def analyze(url):
             url = questionary.text('Please enter an URL:').ask()
         url = url.strip(' /')
         ctx.set_url(url)
-        click.echo(ctx.generate())
     except Exception as e:
         click.echo(str(e), err=True)
         return
 
-    executor = ThreadPoolExecutor(max_workers=1)
-
+    click.echo(ctx.generate())
+    click.echo()
     while True:
         try:
-            future = executor.submit(process_input, ctx)
-            future.result()
+            time.sleep(0.05)
+            process_input(ctx)
         except EOFError:
             break
-        except Exception:
+        except (KeyboardInterrupt, Exception):
             pass
 
-    executor.shutdown()
     click.echo(ctx.generate())

@@ -37,5 +37,5 @@ class WwwNovelhallCom(Scraper):
         soup = self.get_sync(chapter.body_url).soup
         body = soup.select("")
         body = [TextUtils.sanitize_text(x.text) for x in body if x]
-        chapter.body = '\n'.join(
-            ['<p>%s</p>' % (x) for x in body if len(x)])
+        chapter.body = '\n'.join(['<p>%s</p>' % (x) for x in body if len(x)])
+

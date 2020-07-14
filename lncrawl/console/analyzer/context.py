@@ -124,6 +124,7 @@ class AnalyzerContext:
         return (self.get_selector(node.parent) + ' ' + str(current)).strip()
 
     def help(self) -> str:
+        '''Shows this message'''
         methods = []
         variables = []
         for key, val in inspect.getmembers(self):
@@ -147,19 +148,21 @@ class AnalyzerContext:
         message = ''
 
         message += click.style(('=' * 20) + '\n', fg='white', dim=True)
-        message += click.style('Methods:\n', bold=True)
-        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
-        message += '\n'.join(methods) + '\n\n'
-
-        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
         message += click.style('Variables:\n', bold=True)
         message += click.style(('=' * 20) + '\n', fg='white', dim=True)
         message += '\n'.join(variables)
 
+        message += '\n\n'
+
+        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
+        message += click.style('Methods:\n', bold=True)
+        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
+        message += '\n'.join(methods)
+
         return message
 
     def generate(self):
-        '''Genrate scraper and write to file'''
+        '''Genrate source file with current selectors'''
         def get_css(x):
             return "%s" % json.dumps(self._selectors.get(x, ''))
 

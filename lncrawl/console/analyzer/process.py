@@ -9,10 +9,7 @@ from .context import AnalyzerContext
 
 
 def process_input(ctx: AnalyzerContext):
-    try:
-        code = questionary.text('', qmark='>>>').unsafe_ask()
-    except KeyboardInterrupt:
-        return
+    code = questionary.text('', qmark='>>>').unsafe_ask()
 
     if not code:
         return
@@ -35,6 +32,5 @@ def process_input(ctx: AnalyzerContext):
         else:
             click.echo_via_pager(result, color=True)
     except Exception:
-        # err = type(err).__name__ + ': ' + str(err)
         err = traceback.format_exc(chain=False)
         click.echo(click.style(err, fg='red', dim=True))
