@@ -39,5 +39,3 @@ class WwwNovelhallCom(Scraper):
         body = [TextUtils.sanitize_text(x.text) for x in body if x]
         chapter.body = '\n'.join(
             ['<p>%s</p>' % (x) for x in body if len(x)])
-
-        

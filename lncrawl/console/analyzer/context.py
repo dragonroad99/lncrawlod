@@ -202,10 +202,9 @@ class {self.scraper_name}(Scraper):
         soup = self.get_sync(chapter.body_url).soup
         body = soup.select({get_css(Selector.chapter_content)})
         body = [TextUtils.sanitize_text(x.text) for x in body if x]
-        chapter.body = '\\n'.join(
-            ['<p>%s</p>' % (x) for x in body if len(x)])
+        chapter.body = '\\n'.join(['<p>%s</p>' % (x) for x in body if len(x)])
 
-        '''
+'''
 
         src_folder = ModuleUtils.get_path(sources)
         src_file = os.path.join(src_folder, self.scraper_path)
