@@ -55,7 +55,7 @@ class AnalyzerContext:
         return '\n'.join([
             '%s = %s' % (
                 click.style(s.name, fg='green'),
-                self._selectors.get(s, 'None')
+                self._selectors.get(s.name, 'None')
             )
             for s in iter(Selector)
             if not name or s.name == name
@@ -165,7 +165,7 @@ class AnalyzerContext:
     def generate(self):
         '''Genrate source file with current selectors'''
         def get_css(x):
-            return "%s" % json.dumps(self._selectors.get(x, ''))
+            return "%s" % json.dumps(self._selectors.get(x.name, ''))
 
         code = f'''# -*- coding: utf-8 -*-
 

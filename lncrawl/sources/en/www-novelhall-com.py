@@ -18,14 +18,17 @@ class WwwNovelhallCom(Scraper):
         ctx.language = Language.ENGLISH
 
         # Parse novel
-        ctx.novel.name = SoupUtils.select_value(soup, "")
+        ctx.novel.name = SoupUtils.select_value(
+            soup, "#main div.container div.book-main.inner.mt30 div.book-info h1")
         ctx.novel.name = TextUtils.ascii_only(ctx.novel.name)
 
         ctx.novel.cover_url = SoupUtils.select_value(soup, "", attr="src")
-        ctx.novel.details = str(soup.select_one("")).strip()
+        ctx.novel.details = str(soup.select_one(
+            "#main div.container div.book-main.inner.mt30 div.book-info div.intro span.js-close-wrap")).strip()
 
         # Parse authors
-        author = Author("", AuthorType.AUTHOR)
+        author = Author(
+            "#main div.container div.book-main.inner.mt30 div.book-info div.total.booktag span.blue", AuthorType.AUTHOR)
         ctx.authors.add(author)
 
         # TODO: Parse volumes and chapters
