@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
+import json
 import os
 import re
 from enum import IntEnum, auto
@@ -10,12 +11,17 @@ import click
 from bs4 import BeautifulSoup, Tag
 from slugify import slugify
 
-from lncrawl.app import Language
+from lncrawl import sources
+from lncrawl.app import Language, ModuleUtils
 from lncrawl.app.browser import Browser, BrowserResponse
 
 
 class Selector(IntEnum):
     novel_name = auto()
+    novel_author = auto()
+    novel_cover = auto()
+    novel_details = auto()
+    chapter_content = auto()
 
 
 class AnalyzerContext:
@@ -24,6 +30,7 @@ class AnalyzerContext:
         self.url: str = None
         self.response: BrowserResponse = None
         self.soup: BeautifulSoup = None
+        self.scraper_url: str = None
         self.scraper_name: str = None
         self.scraper_path: str = None
         self.novel_language: Language = Language.ENGLISH
@@ -33,9 +40,14 @@ class AnalyzerContext:
         return dict(inspect.getmembers(self))
 
     def _get_commands(self) -> list:
-        return ['help', 'view']
+        return [f.__name__ for f in [
+            self.view,
+            self.help,
+            self.generate,
+        ]]
 
-    def assign(self, name: str, selector: str) -> None:
+    def save(self, name: str, selector: str) -> None:
+        '''Set a selector for generator'''
         self._selectors[name] = selector
 
     def view(self, name: str = None) -> str:
@@ -59,8 +71,12 @@ class AnalyzerContext:
         self.url = value
         self.soup = self.response.soup
 
-        host = str(urlparse(value).hostname)
+        _parsed = urlparse(value)
+        host = str(_parsed.hostname)
         click.echo(f'host = {host}')
+
+        self.scraper_url = f"{_parsed.scheme}://{_parsed.hostname}/"
+        click.echo(f'scraper_url = {self.scraper_url}')
 
         _name = re.sub(r'[^a-zA-Z0-9]+', '_', host)
         self.scraper_name = ''.join([
@@ -141,3 +157,59 @@ class AnalyzerContext:
         message += '\n'.join(variables) + '\n\n'
 
         return message
+
+    def generate(self):
+        '''Genrate scraper and write to file'''
+        def get_css(x):
+            return "%s" % json.dumps(self._selectors.get(x, ''))
+
+        code = f'''
+# -*- coding: utf-8 -*-
+
+from lncrawl.app import (Author, AuthorType, Chapter, Context, Language,
+                         SoupUtils, TextUtils, UrlUtils, Volume)
+from lncrawl.app.scraper import Scraper
+
+
+class {self.scraper_name}(Scraper):
+    version: int = 1
+    base_urls = ['{self.scraper_url}']
+
+    def login(self, ctx: Context) -> bool:
+        pass
+
+    def fetch_info(self, ctx: Context) -> None:
+        soup = self.get_sync(ctx.toc_url).soup
+
+        ctx.language = Language.ENGLISH
+
+        # Parse novel
+        ctx.novel.name = SoupUtils.select_value(soup, {get_css(Selector.novel_name)})
+        ctx.novel.name = TextUtils.ascii_only(ctx.novel.name)
+
+        ctx.novel.cover_url = SoupUtils.select_value(soup, {get_css(Selector.novel_cover)}, attr="src")
+        ctx.novel.details = str(soup.select_one({get_css(Selector.novel_details)})).strip()
+
+        # Parse authors
+        author = Author({get_css(Selector.novel_author)}, AuthorType.AUTHOR)
+        ctx.authors.add(author)
+
+        # TODO: Parse volumes and chapters
+        # volume = ctx.add_volume(serial)
+        # chapter = ctx.add_chapter(serial, volume)
+
+    def fetch_chapter(self, ctx: Context, chapter: Chapter) -> None:
+        soup = self.get_sync(chapter.body_url).soup
+        body = soup.select({get_css(Selector.chapter_content)})
+        body = [TextUtils.sanitize_text(x.text) for x in body if x]
+        chapter.body = '\\n'.join(
+            ['<p>%s</p>' % (x) for x in body if len(x)])
+
+        '''
+
+        src_folder = ModuleUtils.get_path(sources)
+        src_file = os.path.join(src_folder, self.scraper_path)
+        with open(src_file, 'w', encoding='utf8') as fp:
+            fp.write(code)
+
+        return 'Generated: ' + click.style(src_file, fg='blue', underline=True)

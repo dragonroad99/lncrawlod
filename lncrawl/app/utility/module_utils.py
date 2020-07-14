@@ -18,10 +18,15 @@ class ModuleUtils:
         return __version__
 
     @staticmethod
+    def get_path(src: ModuleType, sep=None) -> str:
+        path = os.path.abspath(getattr(src, '__path__')[0])
+        if sep and os.sep != sep:
+            path = path.replace(os.sep, sep)
+        return path
+
+    @staticmethod
     def find_modules(src: ModuleType, base: Any) -> Dict[str, Any]:
-        src_dir = os.path.abspath(getattr(src, '__path__')[0])
-        if os.sep != '/':
-            src_dir = src_dir.replace(os.sep, '/')
+        src_dir = ModuleUtils.get_path(src, '/')
 
         result: Dict[str, Any] = dict()
         for file_path in glob(src_dir + '/**/*.py', recursive=True):

@@ -25,7 +25,7 @@ class SoupUtils:
     @staticmethod
     def select_value(node: Tag,
                      selector: str = None,
-                     value_of: str = 'text') -> str:
+                     attr: str = 'text') -> str:
         '''Select first matching tag by selector.
 
         :param node: The node in which to search
@@ -33,7 +33,7 @@ class SoupUtils:
         :param value_of: The attribute to select (default: text)
         '''
         tag = node.select_one(selector or '')
-        text = SoupUtils.get_value(tag, value_of)
+        text = SoupUtils.get_value(tag, attr)
         return text.strip()
 
     @staticmethod

@@ -21,6 +21,7 @@ def analyze(url):
             url = questionary.text('Please enter an URL:').ask()
         url = url.strip(' /')
         ctx.set_url(url)
+        ctx.generate()
     except Exception as e:
         click.echo(str(e), err=True)
         return
@@ -33,6 +34,8 @@ def analyze(url):
             future.result()
         except EOFError:
             break
-    executor.shutdown()
+        except Exception:
+            pass
 
-    # TODO: generate crawler using ctx
+    executor.shutdown()
+    click.echo(ctx.generate())
