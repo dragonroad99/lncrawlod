@@ -1,8 +1,10 @@
 {
+  "editor.wordWrapColumn": 120,
   "editor.formatOnSave": true,
   "python.linting.flake8Args": ["--ignore", "E501"],
   "python.linting.flake8Enabled": true,
   "python.linting.pylintEnabled": false,
   "python.linting.mypyEnabled": true,
-  "python.linting.enabled": true
+  "python.linting.enabled": true,
+  "python.venvPath": "C:\\Users\\Dipu\\AppData\\Local\\pypoetry\\Cache\\virtualenvs\\lightnovel-crawler-Cfe58d9t-py3.8"
 }

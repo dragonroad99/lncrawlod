@@ -32,7 +32,7 @@ class TestBrowser:
         assert res is not None
         assert res.url == test_url
         assert res.encoding is not None
-        assert res.response.status_code == 204
+        assert res.raw.status_code == 204
         assert res.json == json_data
         assert res.soup is not None
         assert res.soup.body.text == json.dumps(json_data)
@@ -46,7 +46,7 @@ class TestBrowser:
                       body='<html><head></head><body><p>secret text</p></body></html>')
         res = b.get(test_url)
         assert res is not None
-        assert res.response.status_code == 203
+        assert res.raw.status_code == 203
         assert res.encoding is not None
         assert res.json == {}
         assert res.soup is not None
@@ -60,7 +60,7 @@ class TestBrowser:
                       status=200)
         res = b.get(test_url)
         assert res is not None
-        assert res.response.status_code == 200
+        assert res.raw.status_code == 200
         assert res.encoding is not None
         assert res.json == {}
         assert res.soup is not None
@@ -86,8 +86,8 @@ class TestBrowser:
         res = b.get(test_url)
         assert res is not None
         for key, val in test_headers.items():
-            assert key in res.response.headers
-            assert res.response.headers[key] == val
+            assert key in res.raw.headers
+            assert res.raw.headers[key] == val
 
     @responses.activate
     def test_get_cookies(self):
@@ -103,9 +103,9 @@ class TestBrowser:
                       adding_headers=headers)
         res = b.get(test_url)
         assert res is not None
-        assert res.response.cookies is not None
-        assert res.response.cookies.get('alpha') == 'test'
-        assert res.response.cookies.get('test') == 'cookie'
+        assert res.raw.cookies is not None
+        assert res.raw.cookies.get('alpha') == 'test'
+        assert res.raw.cookies.get('test') == 'cookie'
         assert b.client.cookies.get('alpha') == 'test'
         assert b.client.cookies.get('test') == 'cookie'
 
@@ -120,9 +120,9 @@ class TestBrowser:
         res = b.get(test_url)
         assert res is not None
         assert res.url == test_url
-        assert res.response.cookies is not None
-        assert res.response.cookies.get('test') == 'second'
-        assert res.response.cookies.get('another') == 'fall'
+        assert res.raw.cookies is not None
+        assert res.raw.cookies.get('test') == 'second'
+        assert res.raw.cookies.get('another') == 'fall'
         assert b.client.cookies.get('alpha') == 'test'
         assert b.client.cookies.get('test') == 'second'
         assert b.client.cookies.get('another') == 'fall'

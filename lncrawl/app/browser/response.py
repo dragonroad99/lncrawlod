@@ -24,7 +24,7 @@ class BrowserResponse:
         return self.__url
 
     @property
-    def response(self) -> Response:
+    def raw(self) -> Response:
         return self.__response
 
     @property
@@ -33,12 +33,13 @@ class BrowserResponse:
 
     @property
     def content(self) -> bytes:
-        return self.response.content
+        return self.raw.content
 
     @property
     def text(self) -> str:
         if not hasattr(self, '__text'):
-            self.__text = self.content.decode(encoding=self.encoding, errors='ignore')
+            self.__text = self.content.decode(
+                encoding=self.encoding, errors='ignore')
         return self.__text
 
     @property
