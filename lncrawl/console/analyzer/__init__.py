@@ -21,7 +21,7 @@ def analyze(url):
             url = questionary.text('Please enter an URL:').ask()
         url = url.strip(' /')
         ctx.set_url(url)
-        ctx.generate()
+        click.echo(ctx.generate())
     except Exception as e:
         click.echo(str(e), err=True)
         return

@@ -154,7 +154,7 @@ class AnalyzerContext:
         message += click.style(('=' * 20) + '\n', fg='white', dim=True)
         message += click.style('Variables:\n', bold=True)
         message += click.style(('=' * 20) + '\n', fg='white', dim=True)
-        message += '\n'.join(variables) + '\n\n'
+        message += '\n'.join(variables)
 
         return message
 
