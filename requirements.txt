@@ -11,7 +11,7 @@ html5lib==1.1
 idna==2.10
 js2py==0.70
 lxml==4.5.2
-prompt-toolkit==3.0.3
+prompt-toolkit==2.0.10
 pycparser==2.20
 pyjsparser==2.7.1
 pyparsing==2.4.7
