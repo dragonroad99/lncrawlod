@@ -51,6 +51,7 @@ class AnalyzerContext:
         self._selectors[name] = selector
 
     def view(self, name: str = None) -> str:
+        '''Check list of all available selector names'''
         return '\n'.join([
             '%s = %s' % (
                 click.style(s.name, fg='green'),
@@ -166,8 +167,7 @@ class AnalyzerContext:
         def get_css(x):
             return "%s" % json.dumps(self._selectors.get(x, ''))
 
-        code = f'''
-# -*- coding: utf-8 -*-
+        code = f'''# -*- coding: utf-8 -*-
 
 from lncrawl.app import (Author, AuthorType, Chapter, Context, Language,
                          SoupUtils, TextUtils, UrlUtils, Volume)
