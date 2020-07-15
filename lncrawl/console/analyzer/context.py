@@ -1,28 +1,25 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-import json
 import os
 import re
-from enum import IntEnum, auto
 from urllib.parse import urlparse
 
 import click
+import questionary
 from bs4 import BeautifulSoup, Tag
 from slugify import slugify
 
 from lncrawl import sources
-from lncrawl.app import ModuleUtils
+from lncrawl.app import ModuleUtils, SoupUtils
 from lncrawl.app.browser import Browser, BrowserResponse
+from .models import Selector
 
 
-class Selector(IntEnum):
-    novel_name = auto()
-    novel_author = auto()
-    novel_cover = auto()
-    novel_details = auto()
-    chapter_content = auto()
-    chapter_list = auto()
+class Command:
+    def __init__(self, method):
+        self.method = method
+        self.name = method.__name__
 
 
 class AnalyzerContext:
@@ -39,27 +36,90 @@ class AnalyzerContext:
     def _get_globals(self) -> dict:
         return dict(inspect.getmembers(self))
 
-    def _get_commands(self) -> list:
-        return [f.__name__ for f in [
-            self.view,
-            self.help,
-            self.generate,
-        ]]
+    def _eval(self, code: str):
+        return eval(code, self._get_globals())
 
-    def save(self, name: str, selector: str) -> None:
+    def _get_command(self, name: str):
+        name = name.strip().lower()
+        if name[0] == '_':
+            return None
+        method = getattr(self, name, '')
+        if not inspect.ismethod(method):
+            return None
+        return method
+
+    def _process_command(self, method):
+        if not inspect.ismethod(method):
+            return
+        kwargs = {}
+        for key, val in inspect.signature(method).parameters.items():
+            if val.annotation == bool:
+                kwargs[key] = questionary.confirm(key).ask()
+            else:
+                kwargs[key] = questionary.text(key).ask()
+            if val.annotation == int:
+                kwargs[key] = int(kwargs[key])
+            elif val.annotation == float:
+                kwargs[key] = float(kwargs[key])
+        return method(**kwargs)
+
+    def _locate(self, text: str, attr: str = None) -> dict:
+        '''Find css selector by text or attribute value.
+
+        To find by attribute value, pass the attribute name,
+        or keep it empty to find by text'''
+        if not attr:  # find by text
+            return {
+                self.get_selector(node.parent): str(node)
+                for node in self.soup.find_all(
+                    string=re.compile(text, flags=re.IGNORECASE),
+                    recursive=True
+                )
+            }
+        else:  # find by attribute value
+            return {
+                self.get_selector(node): str(node)
+                for node in self.soup.find_all(
+                    attrs={attr: text},
+                    recursive=True
+                )
+            }
+
+    ###########################################################################
+    #                           Imported Methods                              #
+    ###########################################################################
+
+    from .help import help
+    from .generator import generate
+
+    ###########################################################################
+    #                              Regular Methods                            #
+    ###########################################################################
+
+    def save(self, name: str, selector: str, attribute: str = 'text') -> None:
         '''Set a selector for generator'''
-        self._selectors[name] = selector
+        self._selectors[name] = [selector, attribute]
 
-    def view(self, name: str = None) -> str:
+    def view(self):
         '''Check list of all available selector names'''
-        return '\n'.join([
-            '%s = %s' % (
-                click.style(s.name, fg='green'),
-                self._selectors.get(s.name, 'None')
-            )
-            for s in iter(Selector)
-            if not name or s.name == name
-        ])
+        message = ''
+        for selector_name in Selector.values():
+            message += click.style(selector_name, fg='green')
+            message += ' = '
+            arr = self._selectors.get(selector_name, [])
+            css = arr[0] if len(arr) >= 1 else None
+            attr = arr[1] if len(arr) >= 2 else 'text'
+            message += click.style(selector_name, fg='cyan')
+            message += '[%s]' % attr
+            message += '\n'
+            if not css:
+                continue
+            val = SoupUtils.select_value(self.soup, css, attr)
+            if len(val) > 200:
+                val = '%s... (%d more lines)\n' % (val[:180], len(val) - 180)
+            message += click.style(val, fg='white', dim=True)
+            message += '\n'
+        return message
 
     def set_url(self, value: str) -> None:
         '''Change current url'''
@@ -93,27 +153,6 @@ class AnalyzerContext:
         )
         click.echo(f'scraper_path = {self.scraper_path}')
 
-    def locate(self, text: str) -> str:
-        '''Find css selector for a text'''
-        text = text.lower().strip()
-        selectors = {
-            self.get_selector(node.parent): str(node)
-            for node in self.soup.find_all(
-                string=re.compile(text, flags=re.IGNORECASE),
-                recursive=True
-            )
-        }
-        if not selectors:
-            return 'Found no matching selectors.'
-        result = f'Found {len(selectors)} matching selector(s):\n'
-        result += '\n'.join([
-            ' > '.join([
-                click.style(k, fg='green', bold=True),
-                click.style(v, fg='white', dim=True),
-            ]) for k, v in selectors.items()
-        ])
-        return result
-
     def get_selector(self, node: Tag) -> str:
         '''Get unique css selector of a node'''
         if not node or node.name == '[document]':
@@ -125,99 +164,81 @@ class AnalyzerContext:
         current = '.'.join([node.name] + node.get_attribute_list('class', []))
         return (self.get_selector(node.parent) + ' ' + str(current)).strip()
 
-    def help(self) -> str:
-        '''Shows this message'''
-        methods = []
-        variables = []
-        for key, val in inspect.getmembers(self):
-            val = getattr(self, key)
-            styled_key = click.style(key, fg='green', bold=True)
-            if inspect.isbuiltin(val) or key[0] == '_':
-                continue
-            if inspect.ismethod(val):
-                args = str(inspect.signature(val))
-                args = click.style(args, dim=True)
-                docs = inspect.getdoc(val)
-                docs = '\n- ' + str(docs) if docs else ''
-                methods.append(f"{styled_key}{args}{docs}")
-            else:
-                type_name = type(val).__name__
-                val = str(val)
-                if len(val) > 160:
-                    val = '%s ...(%d more lines)' % (val[:150], len(val) - 150)
-                variables.append(f"{styled_key}:{type_name} = {val}")
+    def locate_text(self, text: str) -> str:
+        selectors = self._locate(text)
+        if not selectors:
+            return 'No matching selectors.'
+        result = f'Found {len(selectors)} matching selector(s):\n'
+        result += '\n'.join([
+            ' > '.join([
+                click.style(k, fg='green', bold=True),
+                click.style(v, fg='white', dim=True),
+            ]) for k, v in selectors.items()
+        ])
+        return result
 
-        message = ''
+    def locate_attr(self, attr: str, value: str) -> str:
+        selectors = self._locate(value, attr)
+        if not selectors:
+            return 'No matching selectors.'
+        result = f'Found {len(selectors)} matching selector(s):\n'
+        result += '\n'.join([
+            ' > '.join([
+                click.style(k, fg='green', bold=True),
+                click.style(v, fg='white', dim=True),
+            ]) for k, v in selectors.items()
+        ])
+        return result
 
-        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
-        message += click.style('Variables:\n', bold=True)
-        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
-        message += '\n'.join(variables)
+    def locate(self):
+        '''Locate a selector and save it'''
+        by_text = questionary.select('What do you want to search by?', [
+            'by text',
+            'by attribute value'
+        ]).unsafe_ask() == 'by text'
 
-        message += '\n\n'
+        attr = None
+        selectors = {}
+        if by_text:
+            text = questionary.text('text').unsafe_ask()
+            selectors = self._locate(text)
+        else:
+            attr = questionary.text('attribute name').unsafe_ask()
+            value = questionary.text('attribute value').unsafe_ask()
+            selectors = self._locate(value, attr)
 
-        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
-        message += click.style('Methods:\n', bold=True)
-        message += click.style(('=' * 20) + '\n', fg='white', dim=True)
-        message += '\n'.join(methods)
+        if not selectors:
+            return 'No matching selectors.'
 
-        return message
+        keys = list(selectors.keys())
+        css_value = keys[0]
+        if len(selectors) > 1:
+            value = questionary.select('Select which to save', [
+                '%d. %s\n      %s' % (index, k, v)
+                for index, (k, v) in enumerate(selectors.items())
+            ]).unsafe_ask()
+            css_value = keys[int(value.split('.')[0])]
+        else:
+            click.echo('Found 1 selector: ', nl=False)
+            click.eecho(click.style(css_value, fg='yellow', bold=True))
 
-    def generate(self):
-        '''Genrate source file with current selectors'''
-        if os.path.exists(self.scraper_path):
-            if not click.confirm('Replace existing file?', default=True):
-                return
+        selector_name = questionary.select('Select where to save', [
+            '%s (%s)' % (s, '::'.join(self._selectors.get(s, ['empty'])))
+            for s in Selector.values()
+        ]).unsafe_ask().split(' ')[0]
 
-        def get_css(x):
-            return json.dumps(self._selectors.get(x.name, ''))
+        self.save(selector_name, css_value, attr)
 
-        code = f'''# -*- coding: utf-8 -*-
+    def modify(self):
+        selector_name = questionary.select('Select where to save', [
+            '%s (%s)' % (s, '::'.join(self._selectors.get(s, ['empty'])))
+            for s in Selector.values()
+        ]).unsafe_ask().split(' ')[0]
 
-from lncrawl.app import (Author, AuthorType, Chapter, Context, Language,
-                         SoupUtils, TextUtils, UrlUtils, Volume)
-from lncrawl.app.scraper import Scraper
+        arr = self._selectors.get(selector_name, [])
+        css = arr[0] if len(arr) >= 1 else ''
+        attr = arr[1] if len(arr) >= 2 else 'text'
 
-
-class {self.scraper_name}(Scraper):
-    version: int = 1
-    base_urls = ['{self.scraper_url}']
-
-    def login(self, ctx: Context) -> bool:
-        pass
-
-    def fetch_info(self, ctx: Context) -> None:
-        soup = self.get_sync(ctx.toc_url).soup
-
-        ctx.language = Language.ENGLISH
-
-        # Parse novel
-        ctx.novel.name = SoupUtils.select_value(soup, {get_css(Selector.novel_name)})
-        ctx.novel.name = TextUtils.ascii_only(ctx.novel.name)
-
-        ctx.novel.cover_url = SoupUtils.select_value(soup, {get_css(Selector.novel_cover)}, attr="src")
-        ctx.novel.details = str(soup.select_one({get_css(Selector.novel_details)})).strip()
-
-        # Parse authors
-        _author = SoupUtils.select_value(soup, {get_css(Selector.novel_author)})
-        _author = TextUtils.ascii_only(_author)
-        ctx.authors.add(Author(_author, AuthorType.AUTHOR))
-
-        # Parse volumes and chapters
-        for serial, a in enumerate(soup.select({get_css(Selector.chapter_list)})):
-            volume = ctx.add_volume(1 + serial // 100)
-            chapter = ctx.add_chapter(serial, volume)
-            chapter.body_url = a['href']
-            chapter.name = TextUtils.sanitize_text(a.text)
-
-    def fetch_chapter(self, ctx: Context, chapter: Chapter) -> None:
-        soup = self.get_sync(chapter.body_url).soup
-        body = soup.select({get_css(Selector.chapter_content)})
-        body = [TextUtils.sanitize_text(x.text) for x in body if x]
-        chapter.body = '\\n'.join(['<p>%s</p>' % (x) for x in body if len(x)])
-
-'''
-        os.makedirs(os.path.dirname(self.scraper_path), exist_ok=True)
-        with open(self.scraper_path, 'w', encoding='utf8') as fp:
-            fp.write(code)
-        return 'Generated: ' + click.style(self.scraper_path, fg='blue', underline=True)
+        css = questionary.text('selector', default=css).unsafe_ask()
+        attr = questionary.text('attribute name', default=attr).unsafe_ask()
+        self._selectors[selector_name] = [css, attr]

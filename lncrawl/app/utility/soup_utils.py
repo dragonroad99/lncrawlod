@@ -34,7 +34,7 @@ class SoupUtils:
         '''
         tag = node.select_one(selector or '')
         text = SoupUtils.get_value(tag, attr)
-        return text.strip()
+        return str(text).strip()
 
     @staticmethod
     def find_value(node: Tag,

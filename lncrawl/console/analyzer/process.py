@@ -20,11 +20,11 @@ def process_input(ctx: AnalyzerContext):
         return
 
     try:
-        command = code.strip().split(' ')[0]
-        if command in ctx._get_commands():
-            result = getattr(ctx, command)()
+        command = ctx._get_command(code)
+        if command:
+            result = ctx._process_command(command)
         else:
-            result = eval(code, ctx._get_globals())
+            result = ctx._eval(code)
 
         result = str(result)
         if len(result) < 5000:

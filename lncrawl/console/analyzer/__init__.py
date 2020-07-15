@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import time
 
 import click
@@ -25,7 +26,9 @@ def analyze(url):
         click.echo(str(e), err=True)
         return
 
-    click.echo(ctx.generate())
+    if not os.path.exists(ctx.scraper_path):
+        click.echo(ctx.generate())
+
     click.echo()
     while True:
         try:
