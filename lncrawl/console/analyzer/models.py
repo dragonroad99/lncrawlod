@@ -13,4 +13,4 @@ class Selector(IntEnum):
 
     @staticmethod
     def values():
-        return [s.name for s in Selector]
+        return [s.name for s in iter(Selector)]

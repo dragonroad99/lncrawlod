@@ -96,9 +96,22 @@ class AnalyzerContext:
     #                              Regular Methods                            #
     ###########################################################################
 
+    def get_selector(self, node: Tag) -> str:
+        '''Get unique css selector of a node'''
+        running = 0
+        selector = ''
+        while node and node.name != 'html':
+            css = '.'.join([node.name] + node.get_attribute_list('class', []))
+            selector = (css + ' ' + selector).strip()
+            running += 1
+            if len(self.soup.select(selector)) == 1 and running > 3:
+                return selector
+            node = node.parent
+        return selector
+
     def save(self, name: str, selector: str, attribute: str = 'text') -> None:
         '''Set a selector for generator'''
-        self._selectors[name] = [selector, attribute]
+        self._selectors[name] = [selector, attribute or 'text']
 
     def view(self):
         '''Check list of all available selector names'''
@@ -106,20 +119,27 @@ class AnalyzerContext:
         for selector_name in Selector.values():
             message += click.style(selector_name, fg='green')
             message += ' = '
+
             arr = self._selectors.get(selector_name, [])
             css = arr[0] if len(arr) >= 1 else None
             attr = arr[1] if len(arr) >= 2 else 'text'
-            message += click.style(selector_name, fg='cyan')
-            message += '[%s]' % attr
-            message += '\n'
             if not css:
+                message += click.style('(empty)', fg='white', dim=True)
+                message += '\n'
                 continue
+
+            message += click.style(css, fg='cyan')
+            message += '[%s]' % attr
+            message += '\n > '
             val = SoupUtils.select_value(self.soup, css, attr)
-            if len(val) > 200:
-                val = '%s... (%d more lines)\n' % (val[:180], len(val) - 180)
+            if len(val) > 300:
+                val = '%s... (%d more lines)' % (val[:280], len(val) - 280)
             message += click.style(val, fg='white', dim=True)
             message += '\n'
         return message
+
+    # Alias for view
+    ls = view
 
     def set_url(self, value: str) -> None:
         '''Change current url'''
@@ -152,17 +172,6 @@ class AnalyzerContext:
             slugify(host, max_length=30) + '.py'
         )
         click.echo(f'scraper_path = {self.scraper_path}')
-
-    def get_selector(self, node: Tag) -> str:
-        '''Get unique css selector of a node'''
-        if not node or node.name == '[document]':
-            return ''
-        if node.name in ['body', 'main']:
-            return node.name
-        if node.has_attr('id'):
-            return '#' + node['id']
-        current = '.'.join([node.name] + node.get_attribute_list('class', []))
-        return (self.get_selector(node.parent) + ' ' + str(current)).strip()
 
     def locate_text(self, text: str) -> str:
         selectors = self._locate(text)
@@ -201,11 +210,11 @@ class AnalyzerContext:
         selectors = {}
         if by_text:
             text = questionary.text('text').unsafe_ask()
-            selectors = self._locate(text)
+            selectors = self._locate(text.strip())
         else:
             attr = questionary.text('attribute name').unsafe_ask()
             value = questionary.text('attribute value').unsafe_ask()
-            selectors = self._locate(value, attr)
+            selectors = self._locate(value.strip(), attr.strip())
 
         if not selectors:
             return 'No matching selectors.'
@@ -220,7 +229,7 @@ class AnalyzerContext:
             css_value = keys[int(value.split('.')[0])]
         else:
             click.echo('Found 1 selector: ', nl=False)
-            click.eecho(click.style(css_value, fg='yellow', bold=True))
+            click.echo(click.style(css_value, fg='yellow', bold=True))
 
         selector_name = questionary.select('Select where to save', [
             '%s (%s)' % (s, '::'.join(self._selectors.get(s, ['empty'])))
@@ -241,4 +250,4 @@ class AnalyzerContext:
 
         css = questionary.text('selector', default=css).unsafe_ask()
         attr = questionary.text('attribute name', default=attr).unsafe_ask()
-        self._selectors[selector_name] = [css, attr]
+        self._selectors[selector_name] = [css.strip(), attr.strip()]

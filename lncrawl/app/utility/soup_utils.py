@@ -18,7 +18,7 @@ class SoupUtils:
             return ''
         if hasattr(node, 'has_attr') and node.has_attr(attr):
             return str(node.get(attr) or '')
-        if hasattr(node, attr):
+        if hasattr(node, str(attr)):
             return str(getattr(node, attr) or '')
         return ''
 
