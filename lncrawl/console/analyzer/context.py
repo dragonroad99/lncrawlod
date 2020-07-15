@@ -101,11 +101,19 @@ class AnalyzerContext:
         running = 0
         selector = ''
         while node and node.name != 'html':
-            css = '.'.join([node.name] + node.get_attribute_list('class', []))
+            css = node.name
+            if node.has_attr('id') and node['id']:
+                css += '#' + node.get('id')
+            else:
+                classes = node.get_attribute_list('class', [])
+                if len(classes) > 0:
+                    css += '.' + '.'.join(classes)
+
             selector = (css + ' ' + selector).strip()
-            running += 1
-            if len(self.soup.select(selector)) == 1 and running > 3:
+            if '#' in selector or (len(self.soup.select(selector)) == 1 and running > 3):
                 return selector
+
+            running += 1
             node = node.parent
         return selector
 
